@@ -1,0 +1,11 @@
+name: "NSM NCSC Norway"
+feed_url: "https://nsm.no/fagomrader/digital-sikkerhet/nasjonalt-cybersikkerhetssenter/varsler-fra-ncsc/rss/"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 14.0
+
+display:
+  items_limit: 10
+  accent_color: "#C62828"

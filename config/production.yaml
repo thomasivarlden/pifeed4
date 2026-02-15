@@ -1,0 +1,12 @@
+# PiFeed4 - Production Mode Overrides
+# =====================================
+# Fullscreen, quiet logging, no debug overlay.
+
+window:
+  fullscreen: true
+
+app:
+  log_level: WARNING
+
+debug:
+  show_overlay: false

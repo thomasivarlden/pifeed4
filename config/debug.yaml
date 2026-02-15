@@ -1,0 +1,17 @@
+# PiFeed4 - Debug Mode Overrides
+# ================================
+# Smaller window, verbose logging, debug overlay enabled.
+
+window:
+  width: 1280
+  height: 720
+  fullscreen: false
+
+app:
+  log_level: DEBUG
+
+debug:
+  show_overlay: true
+
+timing:
+  story_duration: 8.0

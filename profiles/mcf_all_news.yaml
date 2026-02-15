@@ -1,0 +1,11 @@
+name: "MCF - Alla nyheter"
+feed_url: "https://www.mcf.se/sv/rss-floden/rss-alla-nyheter-fran-myndigheten-for-civilt-forsvar/"
+enabled: true
+
+timing:
+  refresh_interval: 3600
+  story_duration: 14.0
+
+display:
+  items_limit: 8
+  accent_color: "#005293"

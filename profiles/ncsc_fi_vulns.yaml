@@ -1,0 +1,11 @@
+name: "NCSC-FI Vulns"
+feed_url: "https://www.kyberturvallisuuskeskus.fi/sites/default/files/rss/vulns.xml"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 14.0
+
+display:
+  items_limit: 5
+  accent_color: "#1565C0"

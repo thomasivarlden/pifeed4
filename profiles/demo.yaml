@@ -1,0 +1,12 @@
+name: "Demo Feed"
+feed_url: ""
+enabled: false
+demo: true
+
+timing:
+  refresh_interval: 0
+  story_duration: 10.0
+
+display:
+  items_limit: 10
+  accent_color: "#1E88E5"

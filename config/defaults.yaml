@@ -1,0 +1,76 @@
+# PiFeed4 - Default Configuration
+# ================================
+# All settings and their default values.  Mode-specific files
+# (debug.yaml, production.yaml) override individual keys via deep-merge.
+
+app:
+  mode: production
+  demo: false
+  profiles_dir: profiles
+  cache_dir: cache
+  backgrounds_dir: backgrounds
+  log_level: INFO
+
+window:
+  width: 1920
+  height: 1080
+  fullscreen: true
+  title: PiFeed
+
+layout:
+  hero_width_ratio: 0.70
+  queue_width_ratio: 0.30
+  ticker_height: 56
+  lower_third_height: 500
+  queue_visible_items: 5
+
+animation:
+  crossfade_duration: 0.8
+  ken_burns_cycle: 15.0
+  ken_burns_scale_min: 1.05
+  ken_burns_scale_max: 1.20
+  lower_third_slide_duration: 0.6
+  lower_third_easing: out_back
+  headline_stagger_delay: 0.15
+  headline_fade_duration: 0.4
+  summary_delay: 0.8
+  summary_fade_duration: 0.5
+  queue_shift_duration: 0.4
+  queue_pulse_period: 2.0
+  ticker_speed: 80.0
+  live_pulse_period: 2.0
+  live_pulse_min_opacity: 0.3
+
+timing:
+  story_duration: 12.0
+  items_per_source: 10
+  feed_refresh_interval: 3600
+
+fonts:
+  headline_size: 72
+  summary_size: 64
+  queue_item_size: 68
+  ticker_size: 34
+  clock_time_size: 44
+  clock_date_size: 26
+
+theme:
+  background_color: [0.08, 0.08, 0.12, 1.0]
+  lower_third_bg_opacity: 0.85
+  queue_bg_color: [0.06, 0.06, 0.10, 0.95]
+  ticker_bg_color: [0.05, 0.05, 0.08, 0.95]
+  text_color: [1.0, 1.0, 1.0, 1.0]
+  text_secondary_color: [0.8, 0.8, 0.8, 1.0]
+  default_accent_color: "#E53935"
+
+cache:
+  max_size_mb: 100
+  image_timeout: 10
+  feed_timeout: 15
+
+debug:
+  show_overlay: true
+  overlay_update_interval: 0.5
+  show_fps: true
+  show_frame_time: true
+  show_memory: true

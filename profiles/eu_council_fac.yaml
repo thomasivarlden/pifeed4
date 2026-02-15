@@ -1,0 +1,11 @@
+name: "EU Council - FAC"
+feed_url: "https://www.consilium.europa.eu/en/rss/meetings.ashx?cat=fac"
+enabled: true
+
+timing:
+  refresh_interval: 7200
+  story_duration: 13.0
+
+display:
+  items_limit: 6
+  accent_color: "#1A237E"

@@ -1,0 +1,11 @@
+name: "Riksdagen - Beslut"
+feed_url: "https://data.riksdagen.se/dokumentlista/?avd=dokument&doktyp=bet&beslutad=1&sort=beslutsdag&sortorder=desc&utformat=rss"
+enabled: true
+
+timing:
+  refresh_interval: 3600
+  story_duration: 15.0
+
+display:
+  items_limit: 8
+  accent_color: "#F9A825"

@@ -1,0 +1,11 @@
+name: "Defense News"
+feed_url: "https://www.defensenews.com/arc/outboundfeeds/rss/category/global/?outputType=xml"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 14.0
+
+display:
+  items_limit: 8
+  accent_color: "#B71C1C"

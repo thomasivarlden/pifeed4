@@ -1,0 +1,11 @@
+name: "CERT-SE"
+feed_url: "https://www.cert.se/feed.rss"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 14.0
+
+display:
+  items_limit: 8
+  accent_color: "#E65100"

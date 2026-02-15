@@ -1,0 +1,11 @@
+name: "UK NCSC"
+feed_url: "https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml"
+enabled: true
+
+timing:
+  refresh_interval: 3600
+  story_duration: 14.0
+
+display:
+  items_limit: 8
+  accent_color: "#00695C"

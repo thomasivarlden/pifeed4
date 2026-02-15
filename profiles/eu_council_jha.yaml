@@ -1,0 +1,11 @@
+name: "EU Council - JHA"
+feed_url: "https://www.consilium.europa.eu/en/rss/meetings.ashx?cat=jha"
+enabled: true
+
+timing:
+  refresh_interval: 7200
+  story_duration: 13.0
+
+display:
+  items_limit: 6
+  accent_color: "#283593"

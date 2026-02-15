@@ -1,0 +1,11 @@
+name: "SecurityWeek"
+feed_url: "https://www.securityweek.com/feed/"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 15.0
+
+display:
+  items_limit: 10
+  accent_color: "#1B5E20"
