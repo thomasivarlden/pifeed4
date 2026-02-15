@@ -1,0 +1,11 @@
+name: "CVEfeed High/Critical"
+feed_url: "https://cvefeed.io/rssfeed/severity/high.xml"
+enabled: true
+
+timing:
+  refresh_interval: 900
+  story_duration: 10.0
+
+display:
+  items_limit: 15
+  accent_color: "#FF4500"
