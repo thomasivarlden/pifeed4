@@ -1,0 +1,11 @@
+name: "AFP World"
+feed_url: "https://www.afp.com/en/rss.xml"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 14.0
+
+display:
+  items_limit: 10
+  accent_color: "#0053A0"

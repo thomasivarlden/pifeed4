@@ -1,0 +1,11 @@
+name: "NYT Lens"
+feed_url: "https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/section/lens/rss.xml"
+enabled: true
+
+timing:
+  refresh_interval: 3600
+  story_duration: 14.0
+
+display:
+  items_limit: 10
+  accent_color: "#1A1A1A"

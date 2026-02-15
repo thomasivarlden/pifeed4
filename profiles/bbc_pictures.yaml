@@ -1,0 +1,11 @@
+name: "BBC In Pictures"
+feed_url: "https://feeds.bbci.co.uk/news/in_pictures/rss.xml"
+enabled: true
+
+timing:
+  refresh_interval: 3600
+  story_duration: 14.0
+
+display:
+  items_limit: 5
+  accent_color: "#BB1919"

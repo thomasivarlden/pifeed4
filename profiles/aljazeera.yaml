@@ -1,0 +1,11 @@
+name: "Al Jazeera"
+feed_url: "https://www.aljazeera.com/xml/rss/all.xml"
+enabled: true
+
+timing:
+  refresh_interval: 1800
+  story_duration: 12.0
+
+display:
+  items_limit: 10
+  accent_color: "#D2A44E"

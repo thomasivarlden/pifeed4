@@ -1,4 +1,5 @@
 import logging
+import re
 import threading
 from typing import List, Optional, Callable
 from datetime import datetime
@@ -29,7 +30,11 @@ def parse_feed_items(feed_url: str, source_name: str, accent_color: str,
         items = []
         for entry in feed.entries:
             # Extract image URL from various feed formats
-            image_url = _normalize_url(_extract_image(entry), feed_link)
+            raw_image = _extract_image(entry)
+            # Fallback: fetch og:image from the article page
+            if not raw_image:
+                raw_image = _fetch_og_image(entry.get('link', ''))
+            image_url = _normalize_url(raw_image, feed_link)
 
             # Parse published date
             published = None
@@ -60,14 +65,19 @@ def parse_feed_items(feed_url: str, source_name: str, accent_color: str,
 
 def _extract_image(entry) -> str:
     """Extract the best image URL from a feed entry."""
-    # Check media:content
+    # Check media:content — pick the largest image by width
     if hasattr(entry, 'media_content') and entry.media_content:
-        for media in entry.media_content:
-            if media.get('medium') == 'image' or media.get('type', '').startswith('image'):
-                return media.get('url', '')
-        # If no explicit image type, take the first media_content
-        if entry.media_content[0].get('url'):
-            return entry.media_content[0]['url']
+        images = [
+            m for m in entry.media_content
+            if m.get('medium') == 'image'
+            or m.get('type', '').startswith('image')
+            or m.get('url', '')
+        ]
+        if images:
+            best = max(images, key=lambda m: int(m.get('width', 0) or 0))
+            url = best.get('url', '')
+            if url:
+                return url
 
     # Check media:thumbnail
     if hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
@@ -79,13 +89,21 @@ def _extract_image(entry) -> str:
             if enc.get('type', '').startswith('image'):
                 return enc.get('href', enc.get('url', ''))
 
-    # Check for image in content/description HTML
-    import re
+    # Check for image in summary/description HTML
     content = entry.get('summary', '') or entry.get('description', '')
     if content:
         match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', content)
         if match:
             return match.group(1)
+
+    # Check content:encoded (WordPress feeds, full article HTML)
+    if hasattr(entry, 'content') and entry.content:
+        for block in entry.content:
+            html = block.get('value', '')
+            if html:
+                match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', html)
+                if match:
+                    return match.group(1)
 
     return ''
 
@@ -108,9 +126,49 @@ def _normalize_url(url: str, base_url: str) -> str:
             break
 
     parsed = urlparse(url)
-    if parsed.scheme and parsed.netloc:
-        return url  # Already absolute
-    return urljoin(base_url, url)
+    if not (parsed.scheme and parsed.netloc):
+        url = urljoin(base_url, url)
+
+    # BBC iChef thumbnails: upscale from 240px to 976px
+    if 'ichef.bbci.co.uk' in url:
+        url = re.sub(r'/\d+/', '/976/', url, count=1)
+
+    return url
+
+
+def _fetch_og_image(article_url: str, timeout: int = 8) -> str:
+    """Fetch an article page and extract the og:image meta tag."""
+    if not article_url:
+        return ''
+    try:
+        import requests as _requests
+        headers = {'User-Agent': 'PiFeed/1.0 (RSS Reader)'}
+        resp = _requests.get(article_url, timeout=timeout, headers=headers,
+                             stream=True)
+        resp.raise_for_status()
+        # Read decoded chunks until we find og:image or hit 128KB
+        text = ''
+        for chunk in resp.iter_content(chunk_size=16384, decode_unicode=True):
+            if chunk:
+                text += chunk if isinstance(chunk, str) else chunk.decode('utf-8', errors='ignore')
+            if len(text) >= 131072 or 'og:image' in text:
+                break
+        resp.close()
+        match = re.search(
+            r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+            text,
+        )
+        if not match:
+            # Try reversed attribute order
+            match = re.search(
+                r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+                text,
+            )
+        if match:
+            return match.group(1)
+    except Exception as e:
+        logger.debug(f"og:image fetch failed for {article_url}: {e}")
+    return ''
 
 
 class FeedFetcherThread:
