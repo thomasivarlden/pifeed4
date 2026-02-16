@@ -64,16 +64,17 @@ class PiFeedApp:
         h = self.pf_config.window.height
         title = self.pf_config.window.title
 
-        flags = 0
+        flags = pygame.SCALED | pygame.DOUBLEBUF
         if self.pf_config.window.fullscreen:
-            flags |= pygame.FULLSCREEN
+            flags |= pygame.FULLSCREEN | pygame.NOFRAME
             self._fullscreen = True
 
         self._screen = pygame.display.set_mode((w, h), flags)
         pygame.display.set_caption(title)
         self._clock = pygame.time.Clock()
 
-        logger.info(f"Window: {w}x{h}, fullscreen={self._fullscreen}")
+        logger.info(f"Window: {w}x{h}, fullscreen={self._fullscreen}, "
+                    f"fps_target={self.pf_config.window.target_fps}")
 
     def _init_data(self):
         """Initialize data layer."""
@@ -123,7 +124,7 @@ class PiFeedApp:
     def _game_loop(self):
         """Main game loop - 60fps."""
         while self.running:
-            dt = self._clock.tick(60) / 1000.0
+            dt = self._clock.tick(self.pf_config.window.target_fps) / 1000.0
 
             # Handle events
             for event in pygame.event.get():
@@ -169,10 +170,10 @@ class PiFeedApp:
         self._fullscreen = not self._fullscreen
         w = self.pf_config.window.width
         h = self.pf_config.window.height
+        flags = pygame.SCALED | pygame.DOUBLEBUF
         if self._fullscreen:
-            self._screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN)
-        else:
-            self._screen = pygame.display.set_mode((w, h))
+            flags |= pygame.FULLSCREEN | pygame.NOFRAME
+        self._screen = pygame.display.set_mode((w, h), flags)
         # Rebuild UI for new screen size
         sw, sh = self._screen.get_size()
         self.root = PiFeedRoot(sw, sh, self.pf_config, self._clock,

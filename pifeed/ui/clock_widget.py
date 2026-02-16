@@ -35,6 +35,18 @@ class ClockWidget:
         self.pulse_min = 0.3
         self.pulse_speed = 1.0  # full cycle = 2.0 / pulse_speed seconds
 
+        # Cached surfaces for static elements
+        self._live_text_surf = self.live_font.render('LIVE', True, (255, 70, 70))
+        dot_radius = 7
+        self._dot_surface = pygame.Surface(
+            (dot_radius * 2, dot_radius * 2), pygame.SRCALPHA,
+        )
+        pygame.draw.circle(self._dot_surface, (255, 50, 50, 255),
+                           (dot_radius, dot_radius), dot_radius)
+        self._cached_pill_bg = None
+        self._cached_pill_w = 0
+        self._cached_pill_h = 0
+
     # ------------------------------------------------------------------
     # Frame callbacks
     # ------------------------------------------------------------------
@@ -71,49 +83,48 @@ class ClockWidget:
         sine_val = 0.5 + 0.5 * math.sin(self._pulse_phase)
         live_opacity = int(255 * (self.pulse_min + (1.0 - self.pulse_min) * sine_val))
 
-        # --- Measure total width so the pill fits its content ---
-        cx_offset = 10  # left padding
-
-        # LIVE dot + gap
         dot_radius = 7
-        dot_w = dot_radius * 2 + 4  # 18 px
-        cx_offset += dot_w
 
-        # LIVE text
-        live_text_surf = self.live_font.render('LIVE', True, (255, 70, 70))
-        cx_offset += live_text_surf.get_width() + 10
-
-        # Time
+        # --- Measure total width so the pill fits its content ---
+        cx_offset = 10
+        cx_offset += dot_radius * 2 + 4
+        cx_offset += self._live_text_surf.get_width() + 10
         time_w = self._time_surface.get_width() if self._time_surface else 0
         cx_offset += time_w + 10
-
-        # Date
         date_w = self._date_surface.get_width() if self._date_surface else 0
-        cx_offset += date_w + 10  # right padding
+        cx_offset += date_w + 10
 
         total_w = cx_offset
         total_h = 44
 
-        # Background pill
-        bg = pygame.Surface((total_w, total_h), pygame.SRCALPHA)
-        pygame.draw.rect(bg, (0, 0, 0, 100), (0, 0, total_w, total_h), border_radius=6)
-        surface.blit(bg, (self.x, self.y))
+        # Background pill (rebuild only when size changes)
+        if total_w != self._cached_pill_w or total_h != self._cached_pill_h:
+            self._cached_pill_w = total_w
+            self._cached_pill_h = total_h
+            self._cached_pill_bg = pygame.Surface(
+                (total_w, total_h), pygame.SRCALPHA,
+            )
+            pygame.draw.rect(self._cached_pill_bg, (0, 0, 0, 100),
+                             (0, 0, total_w, total_h), border_radius=6)
+
+        surface.blit(self._cached_pill_bg, (self.x, self.y))
 
         # Reset cursor for drawing contents
         cx = self.x + 10
         cy = self.y + total_h // 2
 
-        # LIVE dot (pulsing red circle)
-        dot_surf = pygame.Surface((dot_radius * 2, dot_radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(dot_surf, (255, 50, 50, live_opacity),
-                           (dot_radius, dot_radius), dot_radius)
-        surface.blit(dot_surf, (cx, cy - dot_radius))
+        # LIVE dot (pulsing, use set_alpha + restore)
+        self._dot_surface.set_alpha(live_opacity)
+        surface.blit(self._dot_surface, (cx, cy - dot_radius))
+        self._dot_surface.set_alpha(255)
         cx += dot_radius * 2 + 4
 
-        # LIVE text
-        live_text_surf.set_alpha(live_opacity)
-        surface.blit(live_text_surf, (cx, cy - live_text_surf.get_height() // 2))
-        cx += live_text_surf.get_width() + 10
+        # LIVE text (pulsing)
+        self._live_text_surf.set_alpha(live_opacity)
+        surface.blit(self._live_text_surf,
+                     (cx, cy - self._live_text_surf.get_height() // 2))
+        self._live_text_surf.set_alpha(255)
+        cx += self._live_text_surf.get_width() + 10
 
         # Time
         if self._time_surface:

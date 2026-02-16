@@ -16,6 +16,7 @@ window:
   height: 1080
   fullscreen: true
   title: PiFeed
+  target_fps: 30
 
 layout:
   hero_width_ratio: 0.70

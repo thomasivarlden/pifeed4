@@ -52,6 +52,8 @@ class QueueItemWidget:
         # Pre-rendered surfaces
         self._title_surface = None
         self._label_surface = None  # "UP NEXT" label for next_source role
+        self._role_bg = None        # Cached role background surface
+        self._accent_bar = None     # Cached accent bar surface
 
     def set_data(self, title, accent_color, index, role='upcoming'):
         """Update the item's display data and pre-render text surfaces."""
@@ -62,6 +64,26 @@ class QueueItemWidget:
         self._label_surface = None
 
         max_w = self.rect.width - self._TEXT_LEFT - self._TEXT_RIGHT_PAD
+        w, h = self.rect.width, self.rect.height
+
+        # Pre-render role-based background and accent bar
+        self._role_bg = None
+        self._accent_bar = None
+        r, g, b = accent_color
+
+        if role == 'current':
+            self._role_bg = pygame.Surface((w, h), pygame.SRCALPHA)
+            self._role_bg.fill((r, g, b, 55))
+        elif role == 'previous':
+            self._role_bg = pygame.Surface((w, h), pygame.SRCALPHA)
+            self._role_bg.fill((0, 0, 0, 80))
+            self._accent_bar = pygame.Surface((6, h), pygame.SRCALPHA)
+            self._accent_bar.fill((r, g, b, 90))
+        elif role == 'next_source':
+            self._role_bg = pygame.Surface((w, h), pygame.SRCALPHA)
+            self._role_bg.fill((r, g, b, 25))
+            self._accent_bar = pygame.Surface((6, h), pygame.SRCALPHA)
+            self._accent_bar.fill((r, g, b, 140))
 
         if role == 'next_source':
             # "UP NEXT" label in muted white, source name in accent colour
@@ -132,36 +154,16 @@ class QueueItemWidget:
         y = self.rect.y + y_offset
         w, h = self.rect.width, self.rect.height
 
-        # --- Role-based background ---
-        if self.role == 'current':
-            highlight = pygame.Surface((w, h), pygame.SRCALPHA)
-            r, g, b = self.accent_color
-            highlight.fill((r, g, b, 55))
-            surface.blit(highlight, (x, y))
-        elif self.role == 'previous':
-            dim = pygame.Surface((w, h), pygame.SRCALPHA)
-            dim.fill((0, 0, 0, 80))
-            surface.blit(dim, (x, y))
-        elif self.role == 'next_source':
-            ns_bg = pygame.Surface((w, h), pygame.SRCALPHA)
-            r, g, b = self.accent_color
-            ns_bg.fill((r, g, b, 25))
-            surface.blit(ns_bg, (x, y))
+        # --- Role-based background (cached in set_data) ---
+        if self._role_bg:
+            surface.blit(self._role_bg, (x, y))
 
         # --- Accent bar on the left edge ---
         if self.role == 'current':
             pygame.draw.rect(surface, self.accent_color, (x, y, 8, h))
-        elif self.role == 'previous':
-            bar = pygame.Surface((6, h), pygame.SRCALPHA)
-            r, g, b = self.accent_color
-            bar.fill((r, g, b, 90))
-            surface.blit(bar, (x, y))
-        elif self.role == 'next_source':
-            r, g, b = self.accent_color
-            bar = pygame.Surface((6, h), pygame.SRCALPHA)
-            bar.fill((r, g, b, 140))
-            surface.blit(bar, (x, y))
-        else:
+        elif self._accent_bar:
+            surface.blit(self._accent_bar, (x, y))
+        elif self.role == 'upcoming':
             pygame.draw.rect(surface, self.accent_color, (x, y, 6, h))
 
         # --- Arrow indicator for the current item ---
@@ -235,6 +237,9 @@ class SourceIndicator:
         self._name_surface = None
         self._items_label = None
         self._sources_label = None
+        self._bg_surface = None
+        self._timer_label = None
+        self._last_timer_secs = -1
 
     def update_data(self, name, item_current, item_total, accent_color,
                     story_duration=12.0, source_current=1, source_total=1):
@@ -256,11 +261,26 @@ class SourceIndicator:
             f'{source_current}/{source_total}', True, (180, 180, 180),
         )
 
+        # Cache background surface
+        w, h = self.rect.width, self.rect.height
+        self._bg_surface = pygame.Surface((w, h), pygame.SRCALPHA)
+        self._bg_surface.fill((25, 25, 38, 230))
+
+        self._last_timer_secs = -1  # force timer label rebuild
+
     def update(self, dt):
         """Advance the story countdown timer."""
         self._story_elapsed = min(
             self._story_elapsed + dt, self._story_duration,
         )
+        # Cache timer label — only re-render when displayed seconds change
+        remaining = max(0.0, self._story_duration - self._story_elapsed)
+        secs = int(remaining) + 1 if remaining > 0 else 0
+        if secs != self._last_timer_secs:
+            self._last_timer_secs = secs
+            self._timer_label = self.progress_font.render(
+                f'{secs}s', True, (180, 180, 180),
+            )
 
     def _draw_bar(self, surface, bx, by, bw, bh, fraction, color, label=None):
         """Draw a single progress bar with optional right-aligned label."""
@@ -278,10 +298,9 @@ class SourceIndicator:
         x, y = self.rect.x, self.rect.y
         w, h = self.rect.width, self.rect.height
 
-        # Background
-        bg = pygame.Surface((w, h), pygame.SRCALPHA)
-        bg.fill((25, 25, 38, 230))
-        surface.blit(bg, (x, y))
+        # Background (cached in update_data)
+        if self._bg_surface:
+            surface.blit(self._bg_surface, (x, y))
 
         # Source name
         if self._name_surface:
@@ -310,13 +329,8 @@ class SourceIndicator:
         frac = self._story_elapsed / self._story_duration
         r, g, b = self.accent_color
         timer_color = (min(255, r + 60), min(255, g + 60), min(255, b + 60))
-        remaining = max(0.0, self._story_duration - self._story_elapsed)
-        secs = int(remaining) + 1 if remaining > 0 else 0
-        timer_label = self.progress_font.render(
-            f'{secs}s', True, (180, 180, 180),
-        )
         self._draw_bar(surface, bar_x, bar_y, bar_w, bar_h,
-                       frac, timer_color, timer_label)
+                       frac, timer_color, self._timer_label)
 
 
 # ======================================================================
@@ -350,6 +364,12 @@ class QueueRailWidget:
             rect.x, rect.bottom - indicator_h, rect.width, indicator_h,
         )
         self.source_indicator = SourceIndicator(indicator_rect)
+
+        # Cached background surface
+        self._bg_surface = pygame.Surface(
+            (rect.width, rect.height), pygame.SRCALPHA,
+        )
+        self._bg_surface.fill((15, 15, 25, 242))
 
         # Scroll animation state
         self.tweens = TweenGroup()
@@ -426,10 +446,8 @@ class QueueRailWidget:
 
     def draw(self, surface):
         """Draw the full queue rail onto *surface*."""
-        # Semi-transparent background
-        bg = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        bg.fill((15, 15, 25, 242))
-        surface.blit(bg, self.rect.topleft)
+        # Background (cached)
+        surface.blit(self._bg_surface, self.rect.topleft)
 
         # Clip items to the area above the source indicator so that
         # items scrolling off the top do not bleed over

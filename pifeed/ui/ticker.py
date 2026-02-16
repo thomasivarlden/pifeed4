@@ -34,6 +34,12 @@ class TickerWidget:
         self._text_surface = None
         self._text_width = 0
 
+        # Cached background surface
+        self._bg_surface = pygame.Surface(
+            (rect.width, rect.height), pygame.SRCALPHA,
+        )
+        self._bg_surface.fill(bg_color)
+
         # Current scroll position (pixels, decreasing each frame)
         self._offset_x = 0.0
 
@@ -78,10 +84,8 @@ class TickerWidget:
 
     def draw(self, surface):
         """Draw the ticker bar onto *surface*."""
-        # Background
-        bg = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
-        bg.fill(self.bg_color)
-        surface.blit(bg, self.rect.topleft)
+        # Background (cached)
+        surface.blit(self._bg_surface, self.rect.topleft)
 
         # Top accent / separator line
         pygame.draw.line(

@@ -46,6 +46,7 @@ class LowerThirdWidget:
         # Pre-rendered text surfaces (rebuilt in set_content)
         self._headline_surface = None
         self._summary_surface = None
+        self._bg_surface = None
 
     # ------------------------------------------------------------------
     # Content management
@@ -59,6 +60,14 @@ class LowerThirdWidget:
         self.headline_text = headline or ''
         self.summary_text = summary or ''
         self.accent_color = hex_to_rgb(accent_hex)
+
+        # Pre-render background surface (accent-tinted with left bar)
+        banner_w = self.hero_rect.width
+        self._bg_surface = pygame.Surface((banner_w, self.height), pygame.SRCALPHA)
+        r, g, b = self.accent_color
+        self._bg_surface.fill((int(r * 0.3), int(g * 0.3), int(b * 0.3), 216))
+        pygame.draw.rect(self._bg_surface, (*self.accent_color, 255),
+                         (0, 0, 8, self.height))
 
         max_text_width = self.hero_rect.width - 64  # 32 px padding each side
 
@@ -144,33 +153,28 @@ class LowerThirdWidget:
             headline_opacity: ``0.0`` .. ``1.0`` fade for headline text.
             summary_opacity:  ``0.0`` .. ``1.0`` fade for summary text.
         """
+        if not self._bg_surface:
+            return
+
         banner_x = self.hero_rect.x + int(x_offset)
         banner_y = self.hero_rect.bottom - self.height
-        banner_w = self.hero_rect.width
 
-        # Semi-transparent background tinted with the accent colour
-        bg = pygame.Surface((banner_w, self.height), pygame.SRCALPHA)
-        r, g, b = self.accent_color
-        bg.fill((int(r * 0.3), int(g * 0.3), int(b * 0.3), 216))
-
-        # Accent bar along the left edge
-        pygame.draw.rect(bg, (*self.accent_color, 255), (0, 0, 8, self.height))
-
-        surface.blit(bg, (banner_x, banner_y))
+        # Cached background surface
+        surface.blit(self._bg_surface, (banner_x, banner_y))
 
         # -- Text --
         text_x = banner_x + 32
         text_y = banner_y + 20
 
-        # Headline
+        # Headline (set_alpha + restore avoids expensive .copy())
         if self._headline_surface and headline_opacity > 0.0:
-            hl = self._headline_surface.copy()
-            hl.set_alpha(int(255 * headline_opacity))
-            surface.blit(hl, (text_x, text_y))
+            self._headline_surface.set_alpha(int(255 * headline_opacity))
+            surface.blit(self._headline_surface, (text_x, text_y))
+            self._headline_surface.set_alpha(255)
             text_y += self._headline_surface.get_height() + 12
 
         # Summary
         if self._summary_surface and summary_opacity > 0.0:
-            sm = self._summary_surface.copy()
-            sm.set_alpha(int(255 * summary_opacity))
-            surface.blit(sm, (text_x, text_y))
+            self._summary_surface.set_alpha(int(255 * summary_opacity))
+            surface.blit(self._summary_surface, (text_x, text_y))
+            self._summary_surface.set_alpha(255)

@@ -38,6 +38,11 @@ class ChannelBadge:
         self._label_surface = self._label_font.render(
             'CHANNEL', True, (180, 180, 190),
         )
+        # Cached composite surfaces (rebuilt in set_source)
+        self._pill_bg = None
+        self._accent_bar_surf = None
+        self._pill_w = 0
+        self._pill_h = 0
 
     def set_source(self, name, accent_hex='#E53935'):
         """Update the displayed channel name and accent colour."""
@@ -50,46 +55,49 @@ class ChannelBadge:
             name.upper(), True, (255, 255, 255),
         )
 
-    def update(self, dt):
-        pass
-
-    def draw(self, surface):
-        if not self._name_surface:
-            return
-
-        pad_x = 16
-        pad_y = 8
-        gap = 2
-
+        # Pre-compute pill dimensions and cache surfaces
+        pad_x, pad_y, gap = 16, 8, 2
         label_w = self._label_surface.get_width()
         label_h = self._label_surface.get_height()
         name_w = self._name_surface.get_width()
         name_h = self._name_surface.get_height()
-
         content_w = max(label_w, name_w)
         content_h = label_h + gap + name_h
-        pill_w = content_w + pad_x * 2 + 6  # 6 for accent bar
-        pill_h = content_h + pad_y * 2
+        self._pill_w = content_w + pad_x * 2 + 6
+        self._pill_h = content_h + pad_y * 2
 
-        pill_x = self._right_x - pill_w
+        self._pill_bg = pygame.Surface(
+            (self._pill_w, self._pill_h), pygame.SRCALPHA,
+        )
+        pygame.draw.rect(self._pill_bg, (0, 0, 0, 120),
+                         (0, 0, self._pill_w, self._pill_h), border_radius=6)
+
+        self._accent_bar_surf = pygame.Surface(
+            (6, self._pill_h), pygame.SRCALPHA,
+        )
+        self._accent_bar_surf.fill((*self._accent, 230))
+
+    def update(self, dt):
+        pass
+
+    def draw(self, surface):
+        if not self._name_surface or not self._pill_bg:
+            return
+
+        pill_x = self._right_x - self._pill_w
         pill_y = self._y
 
-        # Background pill
-        bg = pygame.Surface((pill_w, pill_h), pygame.SRCALPHA)
-        pygame.draw.rect(bg, (0, 0, 0, 120),
-                         (0, 0, pill_w, pill_h), border_radius=6)
-        surface.blit(bg, (pill_x, pill_y))
-
-        # Accent bar on the right edge
-        bar = pygame.Surface((6, pill_h), pygame.SRCALPHA)
-        bar.fill((*self._accent, 230))
-        surface.blit(bar, (pill_x + pill_w - 6, pill_y))
+        # Cached background pill and accent bar
+        surface.blit(self._pill_bg, (pill_x, pill_y))
+        surface.blit(self._accent_bar_surf,
+                     (pill_x + self._pill_w - 6, pill_y))
 
         # "CHANNEL" label
-        lx = pill_x + pad_x
-        ly = pill_y + pad_y
+        lx = pill_x + 16
+        ly = pill_y + 8
         surface.blit(self._label_surface, (lx, ly))
 
         # Source name
-        ny = ly + label_h + gap
+        label_h = self._label_surface.get_height()
+        ny = ly + label_h + 2
         surface.blit(self._name_surface, (lx, ny))

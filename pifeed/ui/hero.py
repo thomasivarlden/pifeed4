@@ -79,9 +79,9 @@ class HeroWidget:
             logger.warning("Failed to load image %s: %s", image_path, exc)
             return None
 
-        # Target dimensions with 30 % oversize
-        target_w = int(self.rect.width * 1.3)
-        target_h = int(self.rect.height * 1.3)
+        # Target dimensions with 20 % oversize for Ken Burns headroom
+        target_w = int(self.rect.width * 1.2)
+        target_h = int(self.rect.height * 1.2)
 
         # Scale to *cover* the target (no letterboxing)
         iw, ih = img.get_size()
@@ -162,14 +162,16 @@ class HeroWidget:
 
         if 0.0 < crossfade < 1.0:
             # --- Mid-crossfade: blend front (fading out) and back (fading in) ---
+            # Images are .convert() (no per-pixel alpha), so set_alpha()
+            # is non-destructive and we can avoid expensive .copy() calls.
             if self._front_image:
-                tmp = self._front_image.copy()
-                tmp.set_alpha(int(255 * (1.0 - crossfade)))
-                self._blit_centered(surface, tmp, None)
+                self._front_image.set_alpha(int(255 * (1.0 - crossfade)))
+                self._blit_centered(surface, self._front_image, None)
+                self._front_image.set_alpha(255)
             if self._back_image:
-                tmp = self._back_image.copy()
-                tmp.set_alpha(int(255 * crossfade))
-                self._blit_centered(surface, tmp, None)
+                self._back_image.set_alpha(int(255 * crossfade))
+                self._blit_centered(surface, self._back_image, None)
+                self._back_image.set_alpha(255)
         elif crossfade >= 1.0:
             # Crossfade complete -- show back buffer with Ken Burns
             img = self._back_image or self._placeholder
@@ -196,7 +198,7 @@ class HeroWidget:
             if s < 1.0:
                 new_w = int(iw * s)
                 new_h = int(ih * s)
-                image = pygame.transform.smoothscale(image, (new_w, new_h))
+                image = pygame.transform.scale(image, (new_w, new_h))
                 iw, ih = new_w, new_h
             x = self.rect.x + int(kb_transform.x)
             y = self.rect.y + int(kb_transform.y)

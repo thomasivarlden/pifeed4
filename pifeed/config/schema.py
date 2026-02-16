@@ -60,6 +60,7 @@ class WindowConfig:
     height: int = 1080
     fullscreen: bool = True
     title: str = 'PiFeed'
+    target_fps: int = 30
 
 
 @dataclass
